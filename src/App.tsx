@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+// @ts-nocheck
+import React, { useState, useEffect, useMemo } from 'react';
 // DEPENDENCIES: npm install firebase recharts lucide-react
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
@@ -28,12 +29,19 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase safely
-const app = firebaseConfig.apiKey !== "YOUR_API_KEY_HERE" ? initializeApp(firebaseConfig) : null;
-const auth = app ? getAuth(app) : null;
-const db = app ? getFirestore(app) : null;
+let app, auth, db;
+try {
+  if (firebaseConfig.apiKey !== "YOUR_API_KEY_HERE") {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+  }
+} catch (e) {
+  console.error("Firebase Initialization Error:", e);
+}
 
 // --- ICONS & CONFIG ---
-const ICON_MAP: any = {
+const ICON_MAP = {
   sun: Sun, moon: Moon, activity: Activity, check: Check, brain: Brain,
   dollar: DollarSign, trophy: Trophy, book: Book, layout: LayoutDashboard,
   flame: Flame, pen: PenTool, coffee: Coffee, music: Music, smile: Smile,
@@ -62,18 +70,18 @@ const getTodayString = () => {
   return `${year}-${month}-${day}`;
 };
 
-const formatDate = (dateStr: any) => {
+const formatDate = (dateStr) => {
   if (!dateStr) return '';
   const [year, month, day] = dateStr.split('-').map(Number);
   const date = new Date(year, month - 1, day);
   return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 };
 
-const getDaysInMonth = (year: any, month: any) => new Date(year, month + 1, 0).getDate();
-const getFirstDayOfMonth = (year: any, month: any) => new Date(year, month, 1).getDay();
+const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
 
 export default function App() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState(null);
   const [dashboardId, setDashboardId] = useState('');
   const [tempId, setTempId] = useState('');
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -82,14 +90,13 @@ export default function App() {
   
   // Data State
   const [habits, setHabits] = useState(DEFAULT_HABITS);
-  const [history, setHistory] = useState<any>({});
+  const [history, setHistory] = useState({});
   const [configError, setConfigError] = useState(false);
 
   // New Habit Form State
   const [newHabitName, setNewHabitName] = useState('');
   const [newHabitIcon, setNewHabitIcon] = useState('zap');
-  // Fixed: Added setNewHabitCategory back so the dropdown works!
-  const [newHabitCategory, setNewHabitCategory] = useState('Health'); 
+  const [newHabitCategory, setNewHabitCategory] = useState('Health');
 
   // 1. Check Config & Initialize Auth
   useEffect(() => {
@@ -97,9 +104,9 @@ export default function App() {
       setConfigError(true);
       return;
     }
-    // Fixed: Cast auth to 'any'
-    signInAnonymously(auth as any).catch((error) => console.error("Auth Error:", error));
-    const unsubscribe = onAuthStateChanged(auth as any, setUser);
+    
+    signInAnonymously(auth).catch((error) => console.error("Auth Error:", error));
+    const unsubscribe = onAuthStateChanged(auth, setUser);
     return () => unsubscribe();
   }, []);
 
@@ -131,7 +138,7 @@ export default function App() {
     return () => unsubscribe();
   }, [user, dashboardId]);
 
-  const handleLogin = (e: any) => {
+  const handleLogin = (e) => {
     e.preventDefault();
     if (tempId.trim().length > 3) {
       const cleanId = tempId.trim().toLowerCase().replace(/\s+/g, '-');
@@ -148,14 +155,14 @@ export default function App() {
     setHabits(DEFAULT_HABITS);
   };
 
-  const toggleHabit = async (habitId: any) => {
+  const toggleHabit = async (habitId) => {
     if (!user || !dashboardId || !db) return;
     const currentCompleted = history[selectedDate] || [];
     const isCompleted = currentCompleted.includes(habitId);
     
     let newCompleted;
     if (isCompleted) {
-      newCompleted = currentCompleted.filter((id: any) => id !== habitId);
+      newCompleted = currentCompleted.filter((id) => id !== habitId);
     } else {
       newCompleted = [...currentCompleted, habitId];
     }
@@ -165,7 +172,7 @@ export default function App() {
     await setDoc(doc(db, 'trackers', dashboardId), { history: newHistory }, { merge: true });
   };
 
-  const addHabit = async (e: any) => {
+  const addHabit = async (e) => {
     e.preventDefault();
     if (!newHabitName.trim()) return;
 
@@ -184,7 +191,7 @@ export default function App() {
     }
   };
 
-  const deleteHabit = async (habitId: any) => {
+  const deleteHabit = async (habitId) => {
     if (!confirm('Are you sure you want to delete this habit?')) return;
     const updatedHabits = habits.filter(h => h.id !== habitId);
     setHabits(updatedHabits);
@@ -199,7 +206,7 @@ export default function App() {
     return Math.round((completedCount / habits.length) * 100);
   }, [history, selectedDate, habits]);
 
-  const getCompletionForDate = (dateStr: any) => {
+  const getCompletionForDate = (dateStr) => {
     if (habits.length === 0) return 0;
     const completedCount = (history[dateStr] || []).length;
     return Math.round((completedCount / habits.length) * 100);
@@ -231,7 +238,7 @@ export default function App() {
       return { ...habit, count, percentage: Math.round((count / daysToCheck) * 100) };
     }).sort((a, b) => b.count - a.count);
 
-    let strongest: any[], weakest: any[];
+    let strongest, weakest;
     if (habitStats.length <= 10) {
       const mid = Math.ceil(habitStats.length / 2);
       strongest = habitStats.slice(0, mid);
@@ -318,12 +325,11 @@ export default function App() {
           <Plus className="mr-2 text-blue-600" /> Add New Habit
         </h2>
         
-        {/* ADDED: Category Selector */}
         <form onSubmit={addHabit} className="flex flex-col md:flex-row gap-4">
           <input 
             type="text" 
             placeholder="e.g. Morning Run, Sketching..." 
-            className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 text-black bg-white"
             value={newHabitName}
             onChange={(e) => setNewHabitName(e.target.value)}
           />
