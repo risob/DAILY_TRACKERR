@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 // DEPENDENCIES: npm install firebase recharts lucide-react
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
@@ -88,7 +88,8 @@ export default function App() {
   // New Habit Form State
   const [newHabitName, setNewHabitName] = useState('');
   const [newHabitIcon, setNewHabitIcon] = useState('zap');
-  const [newHabitCategory, setNewHabitCategory] = useState('Health'); // Default category
+  // Fixed: Added setNewHabitCategory back so the dropdown works!
+  const [newHabitCategory, setNewHabitCategory] = useState('Health'); 
 
   // 1. Check Config & Initialize Auth
   useEffect(() => {
@@ -289,7 +290,7 @@ export default function App() {
               <Flame className="mr-2" size={20} /> Needs Focus
             </h3>
             <div className="space-y-5">
-              {weakest.map((stat, i) => (
+              {weakest.map((stat) => (
                 <div key={stat.id} className="flex items-center">
                    <div className="flex-1">
                     <div className="flex justify-between mb-1">
