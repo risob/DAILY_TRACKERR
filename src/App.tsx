@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 // DEPENDENCIES: npm install firebase recharts lucide-react
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
@@ -15,7 +15,7 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, setDoc, onSnapshot } from 'firebase/firestore';
 
 // ------------------------------------------------------------------
-// ⚠️ PASTE YOUR FIREBASE KEYS HERE AGAIN ⚠️
+// ⚠️ PASTE YOUR FIREBASE KEYS HERE ⚠️
 // ------------------------------------------------------------------
 const firebaseConfig = {
   apiKey: "AIzaSyDOZ61L3Js0Ax4WU6jVf8gqJECPVVDkRok",
@@ -39,6 +39,8 @@ const ICON_MAP: any = {
   flame: Flame, pen: PenTool, coffee: Coffee, music: Music, smile: Smile,
   heart: Heart, zap: Zap
 };
+
+const CATEGORIES = ['Health', 'Productivity', 'Wellness', 'Finance', 'Growth', 'General'];
 
 const DEFAULT_HABITS = [
   { id: 'h1', label: 'Wake at 6:00 AM', icon: 'sun', category: 'Health' },
@@ -86,8 +88,7 @@ export default function App() {
   // New Habit Form State
   const [newHabitName, setNewHabitName] = useState('');
   const [newHabitIcon, setNewHabitIcon] = useState('zap');
-  // Removed unused category setter
-  const [newHabitCategory] = useState('General'); 
+  const [newHabitCategory, setNewHabitCategory] = useState('Health'); // Default category
 
   // 1. Check Config & Initialize Auth
   useEffect(() => {
@@ -288,8 +289,7 @@ export default function App() {
               <Flame className="mr-2" size={20} /> Needs Focus
             </h3>
             <div className="space-y-5">
-              {/* Fixed: Removed the unused 'i' variable from the map function */}
-              {weakest.map((stat) => (
+              {weakest.map((stat, i) => (
                 <div key={stat.id} className="flex items-center">
                    <div className="flex-1">
                     <div className="flex justify-between mb-1">
@@ -316,6 +316,8 @@ export default function App() {
         <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center">
           <Plus className="mr-2 text-blue-600" /> Add New Habit
         </h2>
+        
+        {/* ADDED: Category Selector */}
         <form onSubmit={addHabit} className="flex flex-col md:flex-row gap-4">
           <input 
             type="text" 
@@ -324,8 +326,19 @@ export default function App() {
             value={newHabitName}
             onChange={(e) => setNewHabitName(e.target.value)}
           />
+          
           <select 
-            className="px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-700"
+            value={newHabitCategory}
+            onChange={(e) => setNewHabitCategory(e.target.value)}
+          >
+            {CATEGORIES.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+
+          <select 
+            className="px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-700"
             value={newHabitIcon}
             onChange={(e) => setNewHabitIcon(e.target.value)}
           >
@@ -333,8 +346,8 @@ export default function App() {
               <option key={key} value={key}>{key.charAt(0).toUpperCase() + key.slice(1)} Icon</option>
             ))}
           </select>
-          <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-all">
-            Add Habit
+          <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-md shadow-blue-200">
+            Add
           </button>
         </form>
       </div>
@@ -352,7 +365,10 @@ export default function App() {
                   </div>
                   <div>
                     <div className="font-bold text-slate-700">{habit.label}</div>
-                    <div className="text-xs text-slate-400 capitalize">{habit.icon} • {habit.category || 'General'}</div>
+                    <div className="text-xs text-slate-400 capitalize flex items-center">
+                      <span className="font-semibold text-blue-600 mr-1">{habit.category}</span>
+                      • {habit.icon} icon
+                    </div>
                   </div>
                 </div>
                 <button 
@@ -376,17 +392,8 @@ export default function App() {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-red-50 text-red-800">
         <div className="max-w-lg text-center">
-          <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Settings size={32} />
-          </div>
-          <h1 className="text-2xl font-bold mb-4">Firebase Keys Missing!</h1>
-          <p>You pasted the new code, but you forgot to put your keys back.</p>
-          <p className="mt-4 text-sm bg-white p-4 rounded-lg border border-red-200 text-left">
-            1. Scroll to lines 20-27 in the code.<br/>
-            2. Delete the placeholder text.<br/>
-            3. Paste your config from Firebase Console.<br/>
-            4. Click 'Save' or 'Commit'.
-          </p>
+          <h1 className="text-2xl font-bold mb-4">Firebase Config Missing</h1>
+          <p>Please paste your Firebase keys in App.tsx.</p>
         </div>
       </div>
     );
